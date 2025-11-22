@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khoo Family Macau/Shenzhen Trip - Dec '25</title>
+    <!-- Google Maps API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3JoCG5vOIVPdRmtwNmm9JdkJZUp_P-5Y&libraries=places&callback=initMaps" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 200px);
+            min-height: 700px;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            touch-action: pan-x pan-y;
+        }
+
+        #map, #shenzhenMap {
+            height: 100%;
+            width: 100%;
+            touch-action: pan-x pan-y;
+        }
+
+        .custom-zoom-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .zoom-button {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .zoom-button:hover {
+            background: #f5f5f5;
+        }
+
+        .zoom-button:active {
+            background: #e0e0e0;
+        }
+
+        .reset-view-button,
+        .toggle-cluster-button,
+        .my-location-button {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #333;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+            user-select: none;
+            margin-top: 8px;
+        }
+
+        .reset-view-button:hover,
+        .toggle-cluster-button:hover,
+        .my-location-button:hover {
+            background: #f5f5f5;
+        }
+
+        .reset-view-button:active,
+        .toggle-cluster-button:active,
+        .my-location-button:active {
+            background: #e0e0e0;
+        }
+
+        .toggle-cluster-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .my-location-button.active {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .cluster-label {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 900;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .cluster-label-title {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .cluster-numbers {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .cluster-number {
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .right-pane {
+            width: 450px;
+            background: #f8f9fa;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .pane-section {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .pane-section h2 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .legend-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .legend-list-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .legend-list-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .legend-list-item.active {
+            background-color: #e3f2fd;
+            border-left-color: #667eea;
+        }
+
+        .legend-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.7em;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .legend-number.hotel {
+            background-color: #FF6B6B;
+        }
+
+        .legend-number.transport {
+            background-color: #4ECDC4;
+        }
+
+        .legend-number.attraction {
+            background-color: #45B7D1;
+        }
+
+        .legend-number.food {
+            background-color: #FFA07A;
+        }
+
+        .legend-name {
+            flex: 1;
+            font-size: 0.7em;
+            color: #333;
+            line-height: 1.2;
+        }
+
+        .details-panel {
+            padding: 20px;
+        }
+
+        .details-panel h3 {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 6px;
+        }
+
+        .details-panel .category {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .details-panel .category.hotel {
+            background-color: #FF6B6B;
+            color: white;
+        }
+
+        .details-panel .category.transport {
+            background-color: #4ECDC4;
+            color: white;
+        }
+
+        .details-panel .category.attraction {
+            background-color: #45B7D1;
+            color: white;
+        }
+
+        .details-panel .category.food {
+            background-color: #FFA07A;
+            color: white;
+        }
+
+        .details-panel .address {
+            color: #666;
+            margin: 8px 0;
+            font-size: 0.8em;
+            line-height: 1.5;
+        }
+
+        .details-panel .distance {
+            color: #667eea;
+            margin: 8px 0;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .details-panel .description {
+            color: #333;
+            line-height: 1.6;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+
+        .tabs-container {
+            background: white;
+            border-bottom: 2px solid #667eea;
+            padding: 0 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab:hover {
+            background: #f5f5f5;
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .map-section {
+            display: none;
+        }
+
+        .map-section.active {
+            display: block;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .print-button:hover {
+            background: #5568d3;
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        /* Print styles */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .container {
+                max-width: 100%;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .header {
+                background: white;
+                color: #333;
+                padding: 5mm 0;
+                page-break-after: avoid;
+            }
+
+            .header h1 {
+                color: #667eea;
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+
+            .header p {
+                font-size: 0.9em;
+                color: #666;
+            }
+
+            .print-button,
+            .custom-zoom-controls,
+            .main-content,
+            .tabs-container {
+                display: none !important;
+            }
+
+            .print-only {
+                display: block !important;
+            }
+
+            .print-details-page {
+                padding: 0;
+            }
+
+            .print-details-page h2 {
+                color: #667eea;
+                font-size: 1.5em;
+                margin-bottom: 12px;
+                border-bottom: 2px solid #667eea;
+                padding-bottom: 8px;
+            }
+
+            .print-attraction {
+                margin-bottom: 15px;
+                page-break-inside: avoid;
+            }
+
+            .print-attraction-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+            }
+
+            .print-attraction-number {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 0.85em;
+                flex-shrink: 0;
+            }
+
+            .print-attraction-number.hotel {
+                background-color: #FF6B6B;
+            }
+
+            .print-attraction-number.transport {
+                background-color: #4ECDC4;
+            }
+
+            .print-attraction-number.attraction {
+                background-color: #45B7D1;
+            }
+
+            .print-attraction-number.food {
+                background-color: #FFA07A;
+            }
+
+            .print-attraction-title {
+                font-size: 1em;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .print-attraction-category {
+                display: inline-block;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 0.65em;
+                font-weight: 600;
+                text-transform: uppercase;
+                margin-left: 8px;
+            }
+
+            .print-attraction-category.hotel {
+                background-color: #FF6B6B;
+                color: white;
+            }
+
+            .print-attraction-category.transport {
+                background-color: #4ECDC4;
+                color: white;
+            }
+
+            .print-attraction-category.attraction {
+                background-color: #45B7D1;
+                color: white;
+            }
+
+            .print-attraction-category.food {
+                background-color: #FFA07A;
+                color: white;
+            }
+
+            .print-attraction-info {
+                margin-left: 36px;
+                font-size: 0.8em;
+                line-height: 1.5;
+            }
+
+            .print-attraction-distance {
+                color: #667eea;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .print-attraction-address {
+                color: #666;
+                margin-bottom: 4px;
+            }
+
+            .print-attraction-description {
+                color: #333;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .right-pane {
+                width: 100%;
+                max-height: 400px;
+            }
+
+            .legend-list {
+                grid-template-columns: 1fr;
+            }
+
+            #map, #shenzhenMap {
+                height: 500px;
+            }
+
+            .map-container {
+                height: 500px;
+                min-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        /* Further Details Overlay Styles */
+        .details-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .details-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .details-modal {
+            background: white;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .details-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px 16px 0 0;
+            position: relative;
+        }
+
+        .details-modal-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .details-modal-header .category-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 12px;
+        }
+
+        .details-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .details-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .details-modal-body {
+            padding: 30px;
+        }
+
+        .details-section {
+            margin-bottom: 30px;
+        }
+
+        .details-section h3 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .details-section h3::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .address-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .address-block p {
+            margin: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .hours-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .hours-list li {
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hours-list li.today {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            font-weight: 600;
+        }
+
+        .hours-day {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .hours-time {
+            color: #666;
+        }
+
+        .hours-list li.today .hours-time {
+            color: #667eea;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .reviews-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .rating-stars {
+            font-size: 1.5em;
+            color: #ffc107;
+        }
+
+        .rating-score {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .rating-count {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .review-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid #667eea;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .review-rating {
+            color: #ffc107;
+        }
+
+        .review-text {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .loading-spinner::after {
+            content: '⏳';
+            font-size: 3em;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .details-toggle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .details-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Khoo Family Macau/Shenzhen Trip - Dec '25</h1>
+            <p>Explore top attractions, dining spots, and transport hubs</p>
+        </div>
+
+        <div class="tabs-container">
+            <ul class="tabs">
+                <li class="tab active" data-tab="macau">🇲🇴 Macau</li>
+                <li class="tab" data-tab="shenzhen">🇨🇳 Shenzhen</li>
+            </ul>
+        </div>
+        
+        <!-- Macau Map Section -->
+        <div class="map-section active" id="macau-section">
+        <div class="main-content" id="macau-content">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="custom-zoom-controls">
+                    <button class="zoom-button" id="zoomIn">+</button>
+                    <button class="zoom-button" id="zoomOut">−</button>
+                    <button class="reset-view-button" id="resetView" title="Reset to default view">🏠</button>
+                    <button class="toggle-cluster-button active" id="toggleCluster" title="Toggle cluster labels">🏷️</button>
+                    <button class="my-location-button" id="myLocation" title="My Current Location">📍</button>
+                </div>
+                <!-- Cluster callout boxes -->
+                <div class="cluster-label" id="cluster1" style="display: none;">
+                    <div class="cluster-label-title">Cluster</div>
+                    <div class="cluster-numbers"></div>
+                </div>
+                <div class="cluster-label" id="cluster2" style="display: none;">
+                    <div class="cluster-label-title">Cluster</div>
+                    <div class="cluster-numbers"></div>
+                </div>
+            </div>
+            <div class="right-pane">
+                <div class="pane-section">
+                    <h2>📍 Attractions List</h2>
+                    <ul class="legend-list" id="legendList"></ul>
+                </div>
+                <div class="pane-section details-panel">
+                    <h2>ℹ️ Details</h2>
+                    <div id="detailsContent">
+                        <div class="empty-state">Click on a pin or list item to see details</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Details Page (Page 2) -->
+        <div class="print-only print-details-page" id="macauPrintDetailsPage">
+            <h2>📍 Macau Attractions Details</h2>
+            <div id="macauPrintAttractionsList"></div>
+        </div>
+        </div>
+        <!-- End Macau Section -->
+
+        <!-- Shenzhen Map Section -->
+        <div class="map-section" id="shenzhen-section">
+        <div class="main-content" id="shenzhen-content">
+            <div class="map-container">
+                <div id="shenzhenMap"></div>
+                <div class="custom-zoom-controls">
+                    <button class="zoom-button" id="shenzhenZoomIn">+</button>
+                    <button class="zoom-button" id="shenzhenZoomOut">−</button>
+                    <button class="reset-view-button" id="shenzhenResetView" title="Reset to default view">🏠</button>
+                    <button class="toggle-cluster-button active" id="shenzhenToggleCluster" title="Toggle cluster labels">🏷️</button>
+                    <button class="my-location-button" id="shenzhenMyLocation" title="My Current Location">📍</button>
+                </div>
+            </div>
+            <div class="right-pane">
+                <div class="pane-section">
+                    <h2>📍 Attractions List</h2>
+                    <ul class="legend-list" id="shenzhenLegendList"></ul>
+                </div>
+                <div class="pane-section details-panel">
+                    <h2>ℹ️ Details</h2>
+                    <div id="shenzhenDetailsContent">
+                        <div class="empty-state">Click on a pin or list item to see details</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Details Page -->
+        <div class="print-only print-details-page" id="shenzhenPrintDetailsPage">
+            <h2>📍 Shenzhen Attractions Details</h2>
+            <div id="shenzhenPrintAttractionsList"></div>
+        </div>
+        </div>
+        <!-- End Shenzhen Section -->
+    </div>
+
+    <button class="print-button" onclick="preparePrint()">🖨️ Print Attractions</button>
+
+    <!-- Further Details Overlay -->
+    <div class="details-overlay" id="detailsOverlay">
+        <div class="details-modal">
+            <div class="details-modal-header">
+                <button class="details-close-btn" onclick="closeDetailsOverlay()">×</button>
+                <div class="category-badge" id="modalCategory"></div>
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div class="details-modal-body" id="modalBody">
+                <div class="loading-spinner">Loading details...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accurate coordinates from Google Maps
+        // For print: slightly adjusted coordinates to prevent overlap
+        const locations = [
+            {
+                number: 1,
+                name: "The Venetian Hotel Macau",
+                category: "hotel",
+                coordinates: { lat: 22.1486, lng: 113.5610 },
+                address: "Estrada da Baía de N. Senhora da Esperança, Taipa, Macau",
+                description: "Luxurious resort hotel featuring Venetian-themed architecture, world-class shopping, entertainment, and dining. Your accommodation for the Macau trip."
+            },
+            {
+                number: 2,
+                name: "Macau Taipa Ferry Terminal",
+                category: "transport",
+                coordinates: { lat: 22.164107699461773, lng: 113.57675811047194 },
+                address: "Estr. de Pac On, Macao",
+                description: "Main ferry terminal connecting Macau to Hong Kong and other destinations. Convenient transport hub for island hopping."
+            },
+            {
+                number: 3,
+                name: "Golden Reel Ferris Wheel",
+                category: "attraction",
+                coordinates: { lat: 22.1411, lng: 113.5618 },
+                address: "Studio City, Estrada do Istmo, Cotai, Macau",
+                description: "Iconic 130-meter tall ferris wheel at Studio City offering breathtaking panoramic views of Macau's skyline and the South China Sea."
+            },
+            {
+                number: 4,
+                name: "Joyride Diner at Studio City",
+                category: "food",
+                coordinates: { lat: 22.14135, lng: 113.56155 },
+                address: "Studio City, Estrada do Istmo, Cotai, Macau",
+                description: "Retro-themed American diner serving classic comfort food, burgers, milkshakes, and all-day breakfast in a fun, nostalgic atmosphere."
+            },
+            {
+                number: 5,
+                name: "Macau Science Center",
+                category: "attraction",
+                coordinates: { lat: 22.186243400563928, lng: 113.55677772291202 },
+                address: "Avenida Dr. Sun Yat-sen, Macau Peninsula, Macau",
+                description: "Modern science museum featuring interactive exhibits, planetarium shows, and educational displays about astronomy, space, and technology."
+            },
+            {
+                number: 6,
+                name: "Macau Giant Panda Pavilion",
+                category: "attraction",
+                coordinates: { lat: 22.126802937469012, lng: 113.55900045359779 },
+                address: "Seac Pai Van Park, Coloane, Macau",
+                description: "Home to giant pandas and red pandas. A conservation center where visitors can observe these adorable animals in a naturalistic habitat setting."
+            },
+            {
+                number: 7,
+                name: "Wynn Palace SkyCab",
+                category: "attraction",
+                coordinates: { lat: 22.1476, lng: 113.5712 },
+                address: "Wynn Palace, Avenida da Nave Desportiva, Cotai, Macau",
+                description: "Scenic cable car ride offering stunning aerial views of the Performance Lake's spectacular fountain show and the Cotai Strip."
+            },
+            {
+                number: 8,
+                name: "Ruins of St. Paul's",
+                category: "attraction",
+                coordinates: { lat: 22.1975, lng: 113.5409 },
+                address: "Rua de São Paulo, Macau Peninsula, Macau",
+                description: "Iconic 17th-century church facade, one of Macau's most famous landmarks and a UNESCO World Heritage site. The remains of the Church of Mater Dei."
+            },
+            {
+                number: 9,
+                name: "Margaret's Café e Nata",
+                category: "food",
+                coordinates: { lat: 22.191809, lng: 113.541853 },
+                address: "66號 Patio do Cmte. Mata e Oliveira, Macao",
+                description: "Popular local bakery near the Ruins of St. Paul's, famous for their Portuguese egg tarts and traditional Macanese pastries."
+            },
+            {
+                number: 10,
+                name: "Museum of Macau",
+                category: "attraction",
+                coordinates: { lat: 22.1972, lng: 113.5422 },
+                address: "Fortaleza do Monte, Macau Peninsula, Macau",
+                description: "Comprehensive museum showcasing Macau's rich history, culture, and heritage from ancient times to the present day, located in the historic Monte Fort."
+            },
+            {
+                number: 11,
+                name: "Albergue 1601",
+                category: "food",
+                coordinates: { lat: 22.19754826497914, lng: 113.54440254126352 },
+                address: "8 Calçada da Igreja de São Lázaro, Macau Peninsula, Macau",
+                description: "Charming Portuguese restaurant set in a historic 17th-century building, serving authentic Portuguese and Macanese cuisine in an elegant atmosphere."
+            },
+            {
+                number: 12,
+                name: "Macau International Airport",
+                category: "transport",
+                coordinates: { lat: 22.1496, lng: 113.5917 },
+                address: "Taipa, Macau",
+                description: "Main international airport serving Macau, providing connections to major cities in Asia and beyond. Modern terminal with various amenities."
+            }
+        ];
+
+        // Shenzhen locations
+        const shenzhenLocations = [
+            {
+                number: 1,
+                name: "Shekou Cruise Centre",
+                category: "transport",
+                coordinates: { lat: 22.470214855802453, lng: 113.91289293102581 },
+                address: "Taizilu, Shekou, Nanshan District, Shenzhen, Guangdong, China",
+                description: "International cruise terminal serving Shenzhen, providing connections to Hong Kong, Macau, and other destinations in the region."
+            },
+            {
+                number: 2,
+                name: "Westin Shenzhen Nanshan",
+                category: "hotel",
+                coordinates: { lat: 22.540216618530188, lng: 113.97156380942842 },
+                address: "9668 Shennan Boulevard, Houhai, Nanshan District, Shenzhen, Guangdong, China",
+                description: "Luxury hotel in the Nanshan district, offering modern amenities, excellent service, and convenient access to major attractions."
+            },
+            {
+                number: 3,
+                name: "Window of the World Shenzhen",
+                category: "attraction",
+                coordinates: { lat: 22.5374, lng: 113.9735 },
+                address: "9037 Shennan Boulevard, Overseas Chinese Town, Nanshan District, Shenzhen, Guangdong, China",
+                description: "Theme park featuring over 130 miniature replicas of famous world landmarks including the Eiffel Tower, Pyramids of Egypt, and more."
+            },
+            {
+                number: 4,
+                name: "Galaxy World CoCo Park",
+                category: "attraction",
+                coordinates: { lat: 22.5425, lng: 114.0535 },
+                address: "Xinzhou Road, Futian District, Shenzhen, Guangdong, China",
+                description: "Modern shopping mall and entertainment complex featuring retail stores, restaurants, cinema, and family entertainment options."
+            },
+            {
+                number: 5,
+                name: "O'Plaza Shenzhen",
+                category: "attraction",
+                coordinates: { lat: 22.525283320920867, lng: 113.99143536033652 },
+                address: "8 East Baishi Road, Nanshan District, Shenzhen, China",
+                description: "Popular shopping center in Nanshan district offering diverse retail options, dining, and entertainment facilities."
+            }
+        ];
+
+        // Global variables for both maps
+        let macauMap, shenzhenMap;
+        let macauMarkers = [], shenzhenMarkers = [];
+        let macauSelectedLocation = null, shenzhenSelectedLocation = null;
+        let currentTab = 'macau';
+        let shenzhenMapInitialized = false;
+        
+        // Google Places service
+        let placesService;
+        let currentLocationForDetails = null;
+        
+        // Current location tracking
+        let macauCurrentLocationMarker = null;
+        let shenzhenCurrentLocationMarker = null;
+        let macauCurrentLocationActive = false;
+        let shenzhenCurrentLocationActive = false;
+        let macauCurrentLocationData = null;
+        let shenzhenCurrentLocationData = null;
+
+        // Macau map settings
+        const macauDefaultCenter = { lat: 22.1987, lng: 113.5439 };
+        const macauDefaultZoom = 13;
+
+        // Shenzhen map settings
+        const shenzhenDefaultCenter = { lat: 22.538, lng: 114.015 };
+        const shenzhenDefaultZoom = 12;
+
+        // Color scheme
+        const colors = {
+            hotel: '#FF6B6B',
+            transport: '#4ECDC4',
+            attraction: '#45B7D1',
+            food: '#FFA07A'
+        };
+
+        // Calculate distance between two coordinates using Haversine formula (in km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c;
+            return distance;
+        }
+
+        // Format distance for display
+        function formatDistance(distance) {
+            if (distance < 1) {
+                return (distance * 1000).toFixed(0) + ' m';
+            } else {
+                return distance.toFixed(1) + ' km';
+            }
+        }
+
+        // Get current location using Geolocation API
+        function getCurrentLocation(callback, errorCallback) {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                if (errorCallback) errorCallback();
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const coords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    callback(coords);
+                },
+                (error) => {
+                    let errorMessage = 'Unable to retrieve your location';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                    }
+                    alert(errorMessage);
+                    if (errorCallback) errorCallback();
+                }
+            );
+        }
+
+        // Reverse geocode coordinates to get address
+        function getAddressFromCoords(lat, lng, callback) {
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: lat, lng: lng };
+            
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        callback(results[0].formatted_address);
+                    } else {
+                        callback('Address not found');
+                    }
+                } else {
+                    callback(`Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                }
+            });
+        }
+
+        // Get Venetian Hotel coordinates (location #1)
+        const venetianHotel = locations.find(loc => loc.number === 1);
+        const venetianCoords = venetianHotel.coordinates;
+
+        // Define clusters for callout boxes
+        const clusters = [
+            {
+                id: 'cluster1',
+                numbers: [8, 10, 11],
+                center: { lat: 22.1973, lng: 113.5425 }
+            },
+            {
+                id: 'cluster2',
+                numbers: [3, 4],
+                center: { lat: 22.1412, lng: 113.5617 }
+            }
+        ];
+
+        // Track cluster visibility state
+        let showClusters = true;
+
+        // Create custom numbered marker icon with label
+        function createMarkerIcon(number, color, isHighlighted = false) {
+            return {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: isHighlighted ? 16 : 10,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: isHighlighted ? '#FF0000' : '#FFFF00',
+                strokeWeight: isHighlighted ? 4 : 2,
+                anchor: new google.maps.Point(0, 0),
+                labelOrigin: new google.maps.Point(0, 0)
+            };
+        }
+        
+        // Create marker label configuration
+        function createMarkerLabel(number, isHighlighted = false) {
+            return {
+                text: number.toString(),
+                color: '#FFFFFF',
+                fontSize: isHighlighted ? '14px' : '11px',
+                fontWeight: 'bold'
+            };
+        }
+
+        // Function to update marker appearance
+        function updateMarkerAppearance(marker, location, isHighlighted) {
+            marker.setIcon(createMarkerIcon(location.number, colors[location.category], isHighlighted));
+            marker.setLabel(createMarkerLabel(location.number, isHighlighted));
+            // Bring highlighted marker to front, or reset to normal z-index
+            marker.setZIndex(isHighlighted ? 1000 : location.number);
+        }
+
+        // Function to display Macau details in right pane and handle zoom
+        function showMacauDetails(location, zoomIn = true) {
+            // If clicking the same location again, return to default view and reset marker
+            if (macauSelectedLocation && macauSelectedLocation.number === location.number && zoomIn) {
+                // Reset previously selected marker
+                const prevMarker = macauMarkers.find(m => m.locationNumber === macauSelectedLocation.number);
+                if (prevMarker) {
+                    updateMarkerAppearance(prevMarker, macauSelectedLocation, false);
+                }
+                
+                macauMap.setCenter(macauDefaultCenter);
+                macauMap.setZoom(macauDefaultZoom);
+                macauSelectedLocation = null;
+                
+                // Update active state in legend
+                document.querySelectorAll('#macau-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Clear details or show empty state
+                const detailsContent = document.getElementById('detailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+                return;
+            }
+
+            // Reset previously selected marker if any
+            if (macauSelectedLocation) {
+                const prevMarker = macauMarkers.find(m => m.locationNumber === macauSelectedLocation.number);
+                if (prevMarker) {
+                    updateMarkerAppearance(prevMarker, macauSelectedLocation, false);
+                }
+            }
+
+            // Set as selected location
+            macauSelectedLocation = location;
+
+            // Highlight and enlarge the selected marker
+            const currentMarker = macauMarkers.find(m => m.locationNumber === location.number);
+            if (currentMarker) {
+                updateMarkerAppearance(currentMarker, location, true);
+            }
+
+            // Calculate distance from Venetian Hotel
+            const distance = calculateDistance(
+                venetianCoords.lat, 
+                venetianCoords.lng, 
+                location.coordinates.lat, 
+                location.coordinates.lng
+            );
+            const distanceText = location.number === 1 ? 
+                'Your hotel' : 
+                `${formatDistance(distance)} from The Venetian Hotel`;
+
+            // Display details
+            const detailsContent = document.getElementById('detailsContent');
+            detailsContent.innerHTML = `
+                <h3>${location.name}</h3>
+                <span class="category ${location.category}">${location.category.charAt(0).toUpperCase() + location.category.slice(1)}</span>
+                <div class="distance">🚗 ${distanceText}</div>
+                <div class="address">📍 ${location.address}</div>
+                <div class="description">${location.description}</div>
+                <button class="details-toggle-btn" onclick="openDetailsOverlay(${location.number}, 'macau')">
+                    📋 Further Details
+                </button>
+            `;
+
+            // Update active state in legend
+            document.querySelectorAll('#macau-section .legend-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const listItem = document.querySelector(`#macau-section [data-number="${location.number}"]`);
+            if (listItem) {
+                listItem.classList.add('active');
+            }
+
+            // Zoom in if requested
+            if (zoomIn) {
+                macauMap.setCenter(location.coordinates);
+                macauMap.setZoom(16);
+            }
+        }
+
+        // Toggle Macau current location
+        function toggleMacauCurrentLocation() {
+            const button = document.getElementById('myLocation');
+            
+            console.log('Toggle clicked. Current state:', macauCurrentLocationActive);
+            
+            if (macauCurrentLocationActive) {
+                console.log('Deactivating location');
+                // Remove current location marker and restore default view
+                if (macauCurrentLocationMarker) {
+                    macauCurrentLocationMarker.setMap(null);
+                    macauCurrentLocationMarker = null;
+                }
+                macauCurrentLocationActive = false;
+                macauCurrentLocationData = null;
+                button.classList.remove('active');
+                button.style.backgroundColor = '';
+                
+                // Reset to default view
+                macauMap.setCenter(macauDefaultCenter);
+                macauMap.setZoom(macauDefaultZoom);
+                
+                // Clear details
+                const detailsContent = document.getElementById('detailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+                
+                // Clear active states
+                document.querySelectorAll('#macau-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Reset selected location if any
+                if (macauSelectedLocation) {
+                    const prevMarker = macauMarkers.find(m => m.locationNumber === macauSelectedLocation.number);
+                    if (prevMarker) {
+                        updateMarkerAppearance(prevMarker, macauSelectedLocation, false);
+                    }
+                    macauSelectedLocation = null;
+                }
+            } else {
+                console.log('Activating location');
+                // Prevent multiple clicks while loading
+                if (button.disabled) {
+                    console.log('Button is disabled, ignoring click');
+                    return;
+                }
+                button.disabled = true;
+                button.style.opacity = '0.6';
+                
+                // Get and show current location
+                getCurrentLocation((coords) => {
+                    console.log('Location received:', coords);
+                    // Re-enable button IMMEDIATELY
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    
+                    // Create red pin marker for current location
+                    if (macauCurrentLocationMarker) {
+                        macauCurrentLocationMarker.setMap(null);
+                    }
+                    
+                    macauCurrentLocationMarker = new google.maps.Marker({
+                        position: coords,
+                        map: macauMap,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12,
+                            fillColor: '#FF0000',
+                            fillOpacity: 1,
+                            strokeColor: '#FFFFFF',
+                            strokeWeight: 3
+                        },
+                        title: 'My Current Location',
+                        zIndex: 2000
+                    });
+                    
+                    // Move map to current location
+                    macauMap.setCenter(coords);
+                    macauMap.setZoom(16);
+                    
+                    // Set state immediately - THIS IS CRITICAL
+                    macauCurrentLocationActive = true;
+                    button.classList.add('active');
+                    button.style.backgroundColor = '#FF6B6B';
+                    
+                    console.log('State set to active:', macauCurrentLocationActive);
+                    
+                    // Clear selected location if any
+                    if (macauSelectedLocation) {
+                        const prevMarker = macauMarkers.find(m => m.locationNumber === macauSelectedLocation.number);
+                        if (prevMarker) {
+                            updateMarkerAppearance(prevMarker, macauSelectedLocation, false);
+                        }
+                        macauSelectedLocation = null;
+                    }
+                    
+                    // Calculate distance immediately
+                    const distance = calculateDistance(
+                        venetianCoords.lat,
+                        venetianCoords.lng,
+                        coords.lat,
+                        coords.lng
+                    );
+                    
+                    // Show details IMMEDIATELY with loading state for address
+                    const detailsContent = document.getElementById('detailsContent');
+                    detailsContent.innerHTML = `
+                        <h3>📍 My Current Location</h3>
+                        <span class="category" style="background-color: #FF0000;">Current Location</span>
+                        <div class="distance">🚗 ${formatDistance(distance)} from The Venetian Hotel</div>
+                        <div class="address">📍 <i>Loading address...</i></div>
+                        <div class="description">This is your current location. Click the location button again to return to the default map view.</div>
+                    `;
+                    
+                    // Clear active states from legend
+                    document.querySelectorAll('#macau-section .legend-list-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Get address in background and update when ready
+                    getAddressFromCoords(coords.lat, coords.lng, (address) => {
+                        macauCurrentLocationData = {
+                            coords: coords,
+                            address: address,
+                            distance: distance
+                        };
+                        
+                        // Update address in details panel
+                        detailsContent.innerHTML = `
+                            <h3>📍 My Current Location</h3>
+                            <span class="category" style="background-color: #FF0000;">Current Location</span>
+                            <div class="distance">🚗 ${formatDistance(distance)} from The Venetian Hotel</div>
+                            <div class="address">📍 ${address}</div>
+                            <div class="description">This is your current location. Click the location button again to return to the default map view.</div>
+                        `;
+                    });
+                }, () => {
+                    // Error callback - re-enable button
+                    console.log('Error getting location');
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                });
+            }
+        }
+
+        // Toggle Shenzhen current location
+        function toggleShenzhenCurrentLocation() {
+            const button = document.getElementById('shenzhenMyLocation');
+            
+            console.log('Shenzhen Toggle clicked. Current state:', shenzhenCurrentLocationActive);
+            
+            if (shenzhenCurrentLocationActive) {
+                console.log('Deactivating Shenzhen location');
+                // Remove current location marker and restore default view
+                if (shenzhenCurrentLocationMarker) {
+                    shenzhenCurrentLocationMarker.setMap(null);
+                    shenzhenCurrentLocationMarker = null;
+                }
+                shenzhenCurrentLocationActive = false;
+                shenzhenCurrentLocationData = null;
+                button.classList.remove('active');
+                button.style.backgroundColor = '';
+                
+                // Reset to default view
+                shenzhenMap.setCenter(shenzhenDefaultCenter);
+                shenzhenMap.setZoom(shenzhenDefaultZoom);
+                
+                // Clear details
+                const detailsContent = document.getElementById('shenzhenDetailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+                
+                // Clear active states
+                document.querySelectorAll('#shenzhen-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Reset selected location if any
+                if (shenzhenSelectedLocation) {
+                    const prevMarker = shenzhenMarkers.find(m => m.locationNumber === shenzhenSelectedLocation.number);
+                    if (prevMarker) {
+                        updateMarkerAppearance(prevMarker, shenzhenSelectedLocation, false);
+                    }
+                    shenzhenSelectedLocation = null;
+                }
+            } else {
+                console.log('Activating Shenzhen location');
+                // Prevent multiple clicks while loading
+                if (button.disabled) {
+                    console.log('Button is disabled, ignoring click');
+                    return;
+                }
+                button.disabled = true;
+                button.style.opacity = '0.6';
+                
+                // Get and show current location
+                getCurrentLocation((coords) => {
+                    console.log('Shenzhen location received:', coords);
+                    // Re-enable button IMMEDIATELY
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    
+                    // Create red pin marker for current location
+                    if (shenzhenCurrentLocationMarker) {
+                        shenzhenCurrentLocationMarker.setMap(null);
+                    }
+                    
+                    shenzhenCurrentLocationMarker = new google.maps.Marker({
+                        position: coords,
+                        map: shenzhenMap,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12,
+                            fillColor: '#FF0000',
+                            fillOpacity: 1,
+                            strokeColor: '#FFFFFF',
+                            strokeWeight: 3
+                        },
+                        title: 'My Current Location',
+                        zIndex: 2000
+                    });
+                    
+                    // Move map to current location
+                    shenzhenMap.setCenter(coords);
+                    shenzhenMap.setZoom(16);
+                    
+                    // Set state immediately - THIS IS CRITICAL
+                    shenzhenCurrentLocationActive = true;
+                    button.classList.add('active');
+                    button.style.backgroundColor = '#FF6B6B';
+                    
+                    console.log('Shenzhen state set to active:', shenzhenCurrentLocationActive);
+                    
+                    // Clear selected location if any
+                    if (shenzhenSelectedLocation) {
+                        const prevMarker = shenzhenMarkers.find(m => m.locationNumber === shenzhenSelectedLocation.number);
+                        if (prevMarker) {
+                            updateMarkerAppearance(prevMarker, shenzhenSelectedLocation, false);
+                        }
+                        shenzhenSelectedLocation = null;
+                    }
+                    
+                    // Calculate distance immediately
+                    const westinCoords = { lat: 22.540216618530188, lng: 113.97156380942842 };
+                    const distance = calculateDistance(
+                        westinCoords.lat,
+                        westinCoords.lng,
+                        coords.lat,
+                        coords.lng
+                    );
+                    
+                    // Show details IMMEDIATELY with loading state for address
+                    const detailsContent = document.getElementById('shenzhenDetailsContent');
+                    detailsContent.innerHTML = `
+                        <h3>📍 My Current Location</h3>
+                        <span class="category" style="background-color: #FF0000;">Current Location</span>
+                        <div class="distance">🚗 ${formatDistance(distance)} from The Westin Shenzhen Nanshan</div>
+                        <div class="address">📍 <i>Loading address...</i></div>
+                        <div class="description">This is your current location. Click the location button again to return to the default map view.</div>
+                    `;
+                    
+                    // Clear active states from legend
+                    document.querySelectorAll('#shenzhen-section .legend-list-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Get address in background and update when ready
+                    getAddressFromCoords(coords.lat, coords.lng, (address) => {
+                        shenzhenCurrentLocationData = {
+                            coords: coords,
+                            address: address,
+                            distance: distance
+                        };
+                        
+                        // Update address in details panel
+                        detailsContent.innerHTML = `
+                            <h3>📍 My Current Location</h3>
+                            <span class="category" style="background-color: #FF0000;">Current Location</span>
+                            <div class="distance">🚗 ${formatDistance(distance)} from The Westin Shenzhen Nanshan</div>
+                            <div class="address">📍 ${address}</div>
+                            <div class="description">This is your current location. Click the location button again to return to the default map view.</div>
+                        `;
+                    });
+                }, () => {
+                    // Error callback - re-enable button
+                    console.log('Error getting Shenzhen location');
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                });
+            }
+        }
+
+        // Initialize maps (Macau first, Shenzhen lazy-loaded)
+        function initMaps() {
+            initMacauMap();
+            setupTabSwitching();
+            // Shenzhen map will be initialized when user first clicks on Shenzhen tab
+        }
+
+        // Initialize Macau Google Map
+        function initMacauMap() {
+            macauMap = new google.maps.Map(document.getElementById('map'), {
+                center: macauDefaultCenter,
+                zoom: macauDefaultZoom,
+                zoomControl: false, // Hide default zoom controls, use custom ones
+                scrollwheel: false,
+                disableDoubleClickZoom: true,
+                gestureHandling: 'cooperative',
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
+            });
+
+            // Set default view
+            macauMap.setCenter(macauDefaultCenter);
+            macauMap.setZoom(macauDefaultZoom);
+
+            // Custom zoom controls
+            document.getElementById('zoomIn').addEventListener('click', () => {
+                macauMap.setZoom(macauMap.getZoom() + 1);
+            });
+
+            document.getElementById('zoomOut').addEventListener('click', () => {
+                macauMap.setZoom(macauMap.getZoom() - 1);
+            });
+
+            // Reset view button
+            document.getElementById('resetView').addEventListener('click', () => {
+                macauMap.setCenter(macauDefaultCenter);
+                macauMap.setZoom(macauDefaultZoom);
+                
+                // Reset any highlighted markers
+                if (macauSelectedLocation) {
+                    const prevMarker = macauMarkers.find(m => m.locationNumber === macauSelectedLocation.number);
+                    if (prevMarker) {
+                        updateMarkerAppearance(prevMarker, macauSelectedLocation, false);
+                    }
+                    macauSelectedLocation = null;
+                }
+                
+                // Remove current location marker if active
+                if (macauCurrentLocationActive) {
+                    if (macauCurrentLocationMarker) {
+                        macauCurrentLocationMarker.setMap(null);
+                        macauCurrentLocationMarker = null;
+                    }
+                    macauCurrentLocationActive = false;
+                    macauCurrentLocationData = null;
+                    document.getElementById('myLocation').classList.remove('active');
+                }
+                
+                // Clear active states
+                document.querySelectorAll('#macau-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Clear details
+                const detailsContent = document.getElementById('detailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+            });
+
+            // Toggle cluster button
+            document.getElementById('toggleCluster').addEventListener('click', function() {
+                showClusters = !showClusters;
+                this.classList.toggle('active');
+                updateClusterVisibility();
+            });
+
+            // My Location button
+            document.getElementById('myLocation').addEventListener('click', () => {
+                toggleMacauCurrentLocation();
+            });
+
+            // Prevent trackpad pinch zoom
+            macauMap.addListener('wheel', function(e) {
+                if (e.domEvent.ctrlKey) {
+                    e.domEvent.preventDefault();
+                }
+            });
+
+            // Create legend list
+            const legendList = document.getElementById('legendList');
+            locations.forEach(location => {
+                const listItem = document.createElement('li');
+                listItem.className = 'legend-list-item';
+                listItem.setAttribute('data-number', location.number);
+                listItem.innerHTML = `
+                    <div class="legend-number ${location.category}">${location.number}</div>
+                    <div class="legend-name">${location.name}</div>
+                `;
+                listItem.addEventListener('click', () => {
+                    showMacauDetails(location, false); // Don't zoom when clicking list items
+                });
+                legendList.appendChild(listItem);
+            });
+
+            // Add markers to map
+            locations.forEach(location => {
+                const marker = new google.maps.Marker({
+                    position: location.coordinates,
+                    map: macauMap,
+                    icon: createMarkerIcon(location.number, colors[location.category], false),
+                    label: createMarkerLabel(location.number, false),
+                    title: location.name,
+                    zIndex: location.number // Default z-index based on location number
+                });
+
+                // Store location number for easy lookup
+                marker.locationNumber = location.number;
+
+                marker.addListener('click', () => {
+                    showMacauDetails(location, true);
+                });
+
+                macauMarkers.push(marker);
+            });
+
+            // Prepare print details page
+            preparePrintDetailsPage();
+
+            // Setup cluster callout boxes
+            setupClusterCallouts();
+            
+            // Add custom styling for InfoWindow to make it more discreet
+            const style = document.createElement('style');
+            style.textContent = `
+                .gm-style-iw-c {
+                    padding: 0 !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                }
+                .gm-style-iw-d {
+                    overflow: hidden !important;
+                }
+                /* Hide the pointer/stem of the InfoWindow */
+                .gm-style-iw-tc {
+                    display: none !important;
+                }
+                .gm-style .gm-style-iw-tc::after {
+                    display: none !important;
+                }
+                /* Hide the close button X on cluster boxes */
+                .gm-ui-hover-effect {
+                    display: none !important;
+                }
+                /* Remove transparent padding */
+                .gm-style-iw {
+                    padding: 0 !important;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Add print event listener to fit map bounds before printing
+            window.addEventListener('beforeprint', function() {
+                if (currentTab === 'macau' && macauMarkers.length > 0) {
+                    const bounds = new google.maps.LatLngBounds();
+                    locations.forEach(location => {
+                        bounds.extend(location.coordinates);
+                    });
+                    macauMap.fitBounds(bounds);
+                    // Add padding to ensure all pins are visible with space around them
+                    const currentZoom = macauMap.getZoom();
+                    macauMap.setZoom(currentZoom - 0.8); // Zoom out for better visibility
+                    
+                    // Trigger map resize to ensure proper rendering for print
+                    setTimeout(function() {
+                        google.maps.event.trigger(macauMap, 'resize');
+                        macauMap.fitBounds(bounds);
+                        macauMap.setZoom(macauMap.getZoom() - 0.8);
+                    }, 100);
+                }
+            });
+
+            // Restore default view after printing
+            window.addEventListener('afterprint', function() {
+                if (currentTab === 'macau') {
+                    macauMap.setCenter(macauDefaultCenter);
+                    macauMap.setZoom(macauDefaultZoom);
+                    google.maps.event.trigger(macauMap, 'resize');
+                }
+            });
+        }
+
+        // Prepare for printing (attractions list only)
+        function preparePrint() {
+            window.print();
+        }
+
+        // Setup cluster callout boxes using Google Maps InfoWindow
+        let clusterInfoWindows = [];
+        
+        function setupClusterCallouts() {
+            clusters.forEach(cluster => {
+                // Build HTML content for cluster
+                let numbersHTML = '';
+                cluster.numbers.forEach(num => {
+                    const location = locations.find(loc => loc.number === num);
+                    numbersHTML += `<span style="color: ${colors[location.category]}; font-weight: 600; font-size: 10px; margin: 0 2px;">${num}</span>`;
+                });
+                
+                const content = `
+                    <div style="
+                        padding: 4px 6px; 
+                        font-family: Inter, sans-serif;
+                        background: rgba(255, 255, 255, 0.85);
+                        border-radius: 4px;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                    ">
+                        <div style="display: flex; gap: 3px; align-items: center;">
+                            ${numbersHTML}
+                        </div>
+                    </div>
+                `;
+                
+                // Create InfoWindow for cluster
+                const infoWindow = new google.maps.InfoWindow({
+                    content: content,
+                    position: cluster.center,
+                    disableAutoPan: true
+                });
+                
+                clusterInfoWindows.push({
+                    window: infoWindow,
+                    cluster: cluster
+                });
+            });
+
+            // Update cluster visibility when map changes
+            macauMap.addListener('zoom_changed', updateClusterVisibility);
+            macauMap.addListener('idle', updateClusterVisibility);
+
+            // Initial visibility update
+            setTimeout(updateClusterVisibility, 500);
+        }
+
+        // Update cluster callout visibility based on zoom level and toggle state
+        function updateClusterVisibility() {
+            const zoom = macauMap.getZoom();
+            
+            // Show clusters at zoom levels where pins might overlap and if toggle is on
+            const shouldShow = showClusters && zoom >= 12 && zoom <= 15;
+            
+            clusterInfoWindows.forEach(item => {
+                if (shouldShow) {
+                    item.window.open(macauMap);
+                } else {
+                    item.window.close();
+                }
+            });
+        }
+
+        // Prepare print details page with all Macau attractions
+        function preparePrintDetailsPage() {
+            const printList = document.getElementById('macauPrintAttractionsList');
+            
+            locations.forEach(location => {
+                // Calculate distance
+                const distance = calculateDistance(
+                    venetianCoords.lat, 
+                    venetianCoords.lng, 
+                    location.coordinates.lat, 
+                    location.coordinates.lng
+                );
+                const distanceText = location.number === 1 ? 
+                    'Your hotel' : 
+                    `${formatDistance(distance)} from The Venetian Hotel`;
+
+                const attractionDiv = document.createElement('div');
+                attractionDiv.className = 'print-attraction';
+                attractionDiv.innerHTML = `
+                    <div class="print-attraction-header">
+                        <div class="print-attraction-number ${location.category}">${location.number}</div>
+                        <div>
+                            <span class="print-attraction-title">${location.name}</span>
+                            <span class="print-attraction-category ${location.category}">${location.category}</span>
+                        </div>
+                    </div>
+                    <div class="print-attraction-info">
+                        <div class="print-attraction-distance">🚗 ${distanceText}</div>
+                        <div class="print-attraction-address">📍 ${location.address}</div>
+                        <div class="print-attraction-description">${location.description}</div>
+                    </div>
+                `;
+                printList.appendChild(attractionDiv);
+            });
+
+            // Add CSS for numbered pins in print
+            const style = document.createElement('style');
+            style.textContent = `
+                @media print {
+                    .print-attraction-number.hotel { background-color: #FF6B6B; }
+                    .print-attraction-number.transport { background-color: #4ECDC4; }
+                    .print-attraction-number.attraction { background-color: #45B7D1; }
+                    .print-attraction-number.food { background-color: #FFA07A; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Initialize Shenzhen Google Map
+        function initShenzhenMap() {
+            shenzhenMap = new google.maps.Map(document.getElementById('shenzhenMap'), {
+                center: shenzhenDefaultCenter,
+                zoom: shenzhenDefaultZoom,
+                zoomControl: false,
+                scrollwheel: false,
+                disableDoubleClickZoom: true,
+                gestureHandling: 'cooperative',
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
+            });
+
+            shenzhenMap.setCenter(shenzhenDefaultCenter);
+            shenzhenMap.setZoom(shenzhenDefaultZoom);
+
+            // Custom zoom controls
+            document.getElementById('shenzhenZoomIn').addEventListener('click', () => {
+                shenzhenMap.setZoom(shenzhenMap.getZoom() + 1);
+            });
+
+            document.getElementById('shenzhenZoomOut').addEventListener('click', () => {
+                shenzhenMap.setZoom(shenzhenMap.getZoom() - 1);
+            });
+
+            // Reset view button
+            document.getElementById('shenzhenResetView').addEventListener('click', () => {
+                shenzhenMap.setCenter(shenzhenDefaultCenter);
+                shenzhenMap.setZoom(shenzhenDefaultZoom);
+                
+                if (shenzhenSelectedLocation) {
+                    const prevMarker = shenzhenMarkers.find(m => m.locationNumber === shenzhenSelectedLocation.number);
+                    if (prevMarker) {
+                        updateMarkerAppearance(prevMarker, shenzhenSelectedLocation, false);
+                    }
+                    shenzhenSelectedLocation = null;
+                }
+                
+                // Remove current location marker if active
+                if (shenzhenCurrentLocationActive) {
+                    if (shenzhenCurrentLocationMarker) {
+                        shenzhenCurrentLocationMarker.setMap(null);
+                        shenzhenCurrentLocationMarker = null;
+                    }
+                    shenzhenCurrentLocationActive = false;
+                    shenzhenCurrentLocationData = null;
+                    document.getElementById('shenzhenMyLocation').classList.remove('active');
+                }
+                
+                document.querySelectorAll('#shenzhen-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                const detailsContent = document.getElementById('shenzhenDetailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+            });
+
+            // Toggle cluster button (Shenzhen doesn't have clusters yet, but keeping structure)
+            document.getElementById('shenzhenToggleCluster').addEventListener('click', function() {
+                // No clusters for Shenzhen yet
+            });
+
+            // My Location button
+            document.getElementById('shenzhenMyLocation').addEventListener('click', () => {
+                toggleShenzhenCurrentLocation();
+            });
+
+            // Prevent trackpad pinch zoom
+            shenzhenMap.addListener('wheel', function(e) {
+                if (e.domEvent.ctrlKey) {
+                    e.domEvent.preventDefault();
+                }
+            });
+
+            // Create legend list
+            const legendList = document.getElementById('shenzhenLegendList');
+            shenzhenLocations.forEach(location => {
+                const listItem = document.createElement('li');
+                listItem.className = 'legend-list-item';
+                listItem.setAttribute('data-number', location.number);
+                listItem.innerHTML = `
+                    <div class="legend-number ${location.category}">${location.number}</div>
+                    <div class="legend-name">${location.name}</div>
+                `;
+                listItem.addEventListener('click', () => {
+                    showShenzhenDetails(location, false);
+                });
+                legendList.appendChild(listItem);
+            });
+
+            // Add markers to map
+            shenzhenLocations.forEach(location => {
+                const marker = new google.maps.Marker({
+                    position: location.coordinates,
+                    map: shenzhenMap,
+                    icon: createMarkerIcon(location.number, colors[location.category], false),
+                    label: createMarkerLabel(location.number, false),
+                    title: location.name,
+                    zIndex: location.number
+                });
+
+                marker.locationNumber = location.number;
+
+                marker.addListener('click', () => {
+                    showShenzhenDetails(location, true);
+                });
+
+                shenzhenMarkers.push(marker);
+            });
+
+            // Prepare print details page
+            prepareShenzhenPrintDetailsPage();
+
+            // Add print event listener for Shenzhen
+            window.addEventListener('beforeprint', function() {
+                if (currentTab === 'shenzhen' && shenzhenMarkers.length > 0) {
+                    const bounds = new google.maps.LatLngBounds();
+                    shenzhenLocations.forEach(location => {
+                        bounds.extend(location.coordinates);
+                    });
+                    shenzhenMap.fitBounds(bounds);
+                    const currentZoom = shenzhenMap.getZoom();
+                    shenzhenMap.setZoom(currentZoom - 0.8);
+                    
+                    setTimeout(function() {
+                        google.maps.event.trigger(shenzhenMap, 'resize');
+                        shenzhenMap.fitBounds(bounds);
+                        shenzhenMap.setZoom(shenzhenMap.getZoom() - 0.8);
+                    }, 100);
+                }
+            });
+
+            window.addEventListener('afterprint', function() {
+                if (currentTab === 'shenzhen') {
+                    shenzhenMap.setCenter(shenzhenDefaultCenter);
+                    shenzhenMap.setZoom(shenzhenDefaultZoom);
+                    google.maps.event.trigger(shenzhenMap, 'resize');
+                }
+            });
+        }
+
+        // Show Shenzhen attraction details
+        function showShenzhenDetails(location, zoomIn = true) {
+            if (shenzhenSelectedLocation && shenzhenSelectedLocation.number === location.number && zoomIn) {
+                const prevMarker = shenzhenMarkers.find(m => m.locationNumber === shenzhenSelectedLocation.number);
+                if (prevMarker) {
+                    updateMarkerAppearance(prevMarker, shenzhenSelectedLocation, false);
+                }
+                
+                shenzhenMap.setCenter(shenzhenDefaultCenter);
+                shenzhenMap.setZoom(shenzhenDefaultZoom);
+                shenzhenSelectedLocation = null;
+                
+                document.querySelectorAll('#shenzhen-section .legend-list-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                const detailsContent = document.getElementById('shenzhenDetailsContent');
+                detailsContent.innerHTML = '<div class="empty-state">Click on a pin or list item to see details</div>';
+                return;
+            }
+
+            if (shenzhenSelectedLocation) {
+                const prevMarker = shenzhenMarkers.find(m => m.locationNumber === shenzhenSelectedLocation.number);
+                if (prevMarker) {
+                    updateMarkerAppearance(prevMarker, shenzhenSelectedLocation, false);
+                }
+            }
+
+            shenzhenSelectedLocation = location;
+
+            const currentMarker = shenzhenMarkers.find(m => m.locationNumber === location.number);
+            if (currentMarker) {
+                updateMarkerAppearance(currentMarker, location, true);
+            }
+
+            // Calculate distance from Westin Hotel
+            const westinCoords = { lat: 22.540216618530188, lng: 113.97156380942842 };
+            const distance = calculateDistance(
+                westinCoords.lat, 
+                westinCoords.lng, 
+                location.coordinates.lat, 
+                location.coordinates.lng
+            );
+            const distanceText = location.number === 2 ? 
+                'Your hotel' : 
+                `${formatDistance(distance)} from The Westin Shenzhen Nanshan`;
+
+            const detailsContent = document.getElementById('shenzhenDetailsContent');
+            detailsContent.innerHTML = `
+                <h3>${location.name}</h3>
+                <span class="category ${location.category}">${location.category.charAt(0).toUpperCase() + location.category.slice(1)}</span>
+                <div class="distance">🚗 ${distanceText}</div>
+                <div class="address">📍 ${location.address}</div>
+                <div class="description">${location.description}</div>
+                <button class="details-toggle-btn" onclick="openDetailsOverlay(${location.number}, 'shenzhen')">
+                    📋 Further Details
+                </button>
+            `;
+
+            document.querySelectorAll('#shenzhen-section .legend-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const listItem = document.querySelector(`#shenzhen-section [data-number="${location.number}"]`);
+            if (listItem) {
+                listItem.classList.add('active');
+            }
+
+            if (zoomIn) {
+                shenzhenMap.setCenter(location.coordinates);
+                shenzhenMap.setZoom(16);
+            }
+        }
+
+        // Prepare Shenzhen print details page
+        function prepareShenzhenPrintDetailsPage() {
+            const printList = document.getElementById('shenzhenPrintAttractionsList');
+            const westinCoords = { lat: 22.540216618530188, lng: 113.97156380942842 };
+            
+            shenzhenLocations.forEach(location => {
+                const distance = calculateDistance(
+                    westinCoords.lat, 
+                    westinCoords.lng, 
+                    location.coordinates.lat, 
+                    location.coordinates.lng
+                );
+                const distanceText = location.number === 2 ? 
+                    'Your hotel' : 
+                    `${formatDistance(distance)} from The Westin Shenzhen Nanshan`;
+                
+                const attractionDiv = document.createElement('div');
+                attractionDiv.className = 'print-attraction';
+                attractionDiv.innerHTML = `
+                    <h3><span class="attraction-number">${location.number}</span> ${location.name}</h3>
+                    <div class="print-category ${location.category}">${location.category.charAt(0).toUpperCase() + location.category.slice(1)}</div>
+                    <div class="print-distance">🚗 ${distanceText}</div>
+                    <div class="print-address">📍 ${location.address}</div>
+                    <div class="print-description">${location.description}</div>
+                `;
+                printList.appendChild(attractionDiv);
+            });
+        }
+
+        // Setup tab switching
+        function setupTabSwitching() {
+            const tabs = document.querySelectorAll('.tab');
+            const sections = document.querySelectorAll('.map-section');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    currentTab = tabName;
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update visible section
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById(`${tabName}-section`).classList.add('active');
+                    
+                    // Lazy-load Shenzhen map on first click
+                    if (tabName === 'shenzhen' && !shenzhenMapInitialized) {
+                        shenzhenMapInitialized = true;
+                        // Wait for section to be visible before initializing map
+                        setTimeout(() => {
+                            initShenzhenMap();
+                        }, 200);
+                    }
+                    
+                    // Trigger resize on map to ensure proper rendering
+                    setTimeout(() => {
+                        if (tabName === 'macau' && macauMap) {
+                            google.maps.event.trigger(macauMap, 'resize');
+                            macauMap.setCenter(macauDefaultCenter);
+                        } else if (tabName === 'shenzhen' && shenzhenMap) {
+                            google.maps.event.trigger(shenzhenMap, 'resize');
+                            shenzhenMap.setCenter(shenzhenDefaultCenter);
+                        }
+                    }, tabName === 'shenzhen' && !shenzhenMap ? 400 : 100);
+                });
+            });
+        }
+
+        // Update preparePrint to work with current tab
+        function preparePrint() {
+            // Hide all print pages first
+            document.getElementById('macauPrintDetailsPage').style.display = 'none';
+            document.getElementById('shenzhenPrintDetailsPage').style.display = 'none';
+            
+            // Show only the current tab's print page
+            if (currentTab === 'macau') {
+                document.getElementById('macauPrintDetailsPage').style.display = 'block';
+            } else if (currentTab === 'shenzhen') {
+                document.getElementById('shenzhenPrintDetailsPage').style.display = 'block';
+            }
+            
+            window.print();
+            
+            // Reset after print dialog closes
+            setTimeout(() => {
+                document.getElementById('macauPrintDetailsPage').style.display = '';
+                document.getElementById('shenzhenPrintDetailsPage').style.display = '';
+            }, 100);
+        }
+
+        // Further Details Overlay Functions
+        function openDetailsOverlay(locationNumber, mapType) {
+            const locations = mapType === 'macau' ? window.locations : window.shenzhenLocations;
+            const location = locations.find(loc => loc.number === locationNumber);
+            
+            if (!location) return;
+            
+            console.log('Opening details overlay for:', location.name, 'mapType:', mapType);
+            
+            currentLocationForDetails = location;
+            const overlay = document.getElementById('detailsOverlay');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalCategory = document.getElementById('modalCategory');
+            const modalBody = document.getElementById('modalBody');
+            
+            // Show overlay with loading state
+            modalTitle.textContent = location.name;
+            modalCategory.textContent = location.category.charAt(0).toUpperCase() + location.category.slice(1);
+            modalBody.innerHTML = '<div class="loading-spinner">Loading details from Google Places...</div>';
+            overlay.classList.add('active');
+            
+            // Initialize Places Service if not already done
+            const map = mapType === 'macau' ? macauMap : shenzhenMap;
+            if (!placesService) {
+                console.log('Initializing Places Service');
+                try {
+                    placesService = new google.maps.places.PlacesService(map);
+                } catch (error) {
+                    console.error('Error initializing Places Service:', error);
+                    showDetailsError('Google Places API is not available. The API might not be enabled for this key.');
+                    return;
+                }
+            }
+            
+            // Show basic information immediately as fallback
+            setTimeout(() => {
+                if (modalBody.innerHTML.includes('Loading details')) {
+                    console.log('Still loading after 3 seconds, showing basic info');
+                    showBasicInformation(location, mapType);
+                }
+            }, 3000); // Show basic info after 3 seconds if Google API hasn't responded
+            
+            // Set a global timeout for the entire process
+            const globalTimeout = setTimeout(() => {
+                console.error('Global timeout reached');
+                if (modalBody.innerHTML.includes('Loading details')) {
+                    showBasicInformation(location, mapType, 'Google Places API took too long to respond. Showing basic information instead.');
+                }
+            }, 8000); // 8 second timeout before showing error
+            
+            // Store timeout ID so we can clear it if successful
+            window.currentDetailsTimeout = globalTimeout;
+            
+            // Search for the place using Places API
+            try {
+                searchPlaceDetails(location, mapType);
+            } catch (error) {
+                clearTimeout(globalTimeout);
+                console.error('Error searching for place:', error);
+                showBasicInformation(location, mapType, 'An error occurred: ' + error.message);
+            }
+        }
+
+        function closeDetailsOverlay() {
+            const overlay = document.getElementById('detailsOverlay');
+            overlay.classList.remove('active');
+            currentLocationForDetails = null;
+        }
+
+        // Close overlay when clicking outside the modal
+        document.addEventListener('click', function(event) {
+            const overlay = document.getElementById('detailsOverlay');
+            if (event.target === overlay) {
+                closeDetailsOverlay();
+            }
+        });
+
+        function searchPlaceDetails(location, mapType) {
+            console.log('Searching for place:', location.name);
+            
+            const request = {
+                query: location.name,
+                locationBias: location.coordinates,
+                fields: ['place_id', 'name']
+            };
+
+            placesService.findPlaceFromQuery(request, function(results, status) {
+                console.log('findPlaceFromQuery status:', status);
+                console.log('findPlaceFromQuery results:', results);
+                
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    const placeId = results[0].place_id;
+                    console.log('Found place_id:', placeId);
+                    getPlaceDetails(placeId, location, mapType);
+                } else {
+                    console.log('findPlaceFromQuery failed, trying text search. Status:', status);
+                    // Fallback to text search if findPlaceFromQuery fails
+                    textSearchPlace(location, mapType);
+                }
+            });
+        }
+
+        function textSearchPlace(location, mapType) {
+            console.log('Text search for:', location.name);
+            
+            const request = {
+                query: location.name + ' Macau',
+                location: location.coordinates,
+                radius: 500
+            };
+
+            placesService.textSearch(request, function(results, status) {
+                console.log('textSearch status:', status);
+                console.log('textSearch results:', results);
+                
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    const placeId = results[0].place_id;
+                    console.log('Found place_id from text search:', placeId);
+                    getPlaceDetails(placeId, location, mapType);
+                } else {
+                    console.error('Text search failed. Status:', status);
+                    showDetailsError('Unable to find detailed information for this location from Google Places. Status: ' + status);
+                }
+            });
+        }
+
+        function getPlaceDetails(placeId, location, mapType) {
+            console.log('Getting details for place_id:', placeId);
+            
+            const request = {
+                placeId: placeId,
+                fields: ['name', 'formatted_address', 'opening_hours', 'photos', 'rating', 
+                        'user_ratings_total', 'reviews', 'website', 'formatted_phone_number', 
+                        'international_phone_number', 'url', 'types', 'business_status']
+            };
+
+            // Set a timeout in case the API call hangs
+            const timeout = setTimeout(() => {
+                console.error('API call timeout');
+                showDetailsError('Request timed out. Please try again.');
+            }, 10000); // 10 second timeout
+
+            placesService.getDetails(request, function(place, status) {
+                clearTimeout(timeout);
+                console.log('getDetails status:', status);
+                console.log('getDetails place:', place);
+                
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    displayPlaceDetails(place, location, mapType);
+                } else {
+                    console.error('getDetails failed. Status:', status);
+                    showDetailsError('Unable to fetch detailed information from Google Places. Status: ' + status);
+                }
+            });
+        }
+
+        function displayPlaceDetails(place, location, mapType) {
+            console.log('Displaying place details');
+            
+            // Clear the global timeout since we got results
+            if (window.currentDetailsTimeout) {
+                clearTimeout(window.currentDetailsTimeout);
+                window.currentDetailsTimeout = null;
+            }
+            
+            const modalBody = document.getElementById('modalBody');
+            let html = '';
+
+            // Full Address Section
+            html += '<div class="details-section">';
+            html += '<h3>📍 Full Address</h3>';
+            html += '<div class="address-block">';
+            html += `<p><strong>${place.name || location.name}</strong></p>`;
+            html += `<p>${place.formatted_address || location.address}</p>`;
+            if (place.formatted_phone_number) {
+                html += `<p>📞 ${place.formatted_phone_number}</p>`;
+            }
+            if (place.website) {
+                html += `<p>🌐 <a href="${place.website}" target="_blank" style="color: #667eea;">Visit Website</a></p>`;
+            }
+            if (place.url) {
+                html += `<p>🗺️ <a href="${place.url}" target="_blank" style="color: #667eea;">View on Google Maps</a></p>`;
+            }
+            html += '</div></div>';
+
+            // Opening Hours Section
+            html += '<div class="details-section">';
+            html += '<h3>🕒 Opening Hours</h3>';
+            if (place.opening_hours && place.opening_hours.weekday_text) {
+                const today = new Date().getDay();
+                const daysMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const todayName = daysMap[today];
+                
+                html += '<ul class="hours-list">';
+                place.opening_hours.weekday_text.forEach(dayHours => {
+                    const isToday = dayHours.startsWith(todayName);
+                    html += `<li${isToday ? ' class="today"' : ''}>`;
+                    const parts = dayHours.split(': ');
+                    html += `<span class="hours-day">${parts[0]}</span>`;
+                    html += `<span class="hours-time">${parts[1] || 'Closed'}</span>`;
+                    html += '</li>';
+                });
+                html += '</ul>';
+                
+                if (place.opening_hours.open_now !== undefined) {
+                    const statusColor = place.opening_hours.open_now ? '#4CAF50' : '#f44336';
+                    const statusText = place.opening_hours.open_now ? 'Currently Open' : 'Currently Closed';
+                    html += `<p style="color: ${statusColor}; font-weight: 600; margin-top: 10px;">● ${statusText}</p>`;
+                }
+            } else {
+                html += '<div class="info-message">Opening hours information not available from Google Places.</div>';
+            }
+            html += '</div>';
+
+            // Photos Section
+            html += '<div class="details-section">';
+            html += '<h3>📷 Photos</h3>';
+            if (place.photos && place.photos.length > 0) {
+                html += '<div class="photos-grid">';
+                const photosToShow = place.photos.slice(0, 5); // Show up to 5 photos
+                photosToShow.forEach((photo, index) => {
+                    const photoUrl = photo.getUrl({ maxWidth: 400, maxHeight: 300 });
+                    html += `<div class="photo-item" onclick="window.open('${photoUrl}', '_blank')">`;
+                    html += `<img src="${photoUrl}" alt="${place.name} photo ${index + 1}" loading="lazy">`;
+                    html += '</div>';
+                });
+                html += '</div>';
+                html += `<p style="color: #666; font-size: 0.85em; margin-top: 10px;">📷 ${photosToShow.length} photo${photosToShow.length > 1 ? 's' : ''} from Google Places. Click to view full size.</p>`;
+            } else {
+                html += '<div class="info-message">No photos available from Google Places at this time.</div>';
+            }
+            html += '</div>';
+
+            // Reviews Section
+            html += '<div class="details-section">';
+            html += '<h3>⭐ Reviews & Ratings</h3>';
+            if (place.rating) {
+                html += '<div class="reviews-summary">';
+                html += '<div class="rating-display">';
+                html += '<div class="rating-score">' + place.rating.toFixed(1) + '</div>';
+                html += '<div>';
+                html += '<div class="rating-stars">' + getStarRating(place.rating) + '</div>';
+                if (place.user_ratings_total) {
+                    html += `<div class="rating-count">Based on ${place.user_ratings_total.toLocaleString()} reviews</div>`;
+                }
+                html += '</div></div></div>';
+                
+                if (place.reviews && place.reviews.length > 0) {
+                    html += '<h4 style="margin: 20px 0 15px 0; color: #333;">Recent Reviews:</h4>';
+                    const reviewsToShow = place.reviews.slice(0, 3); // Show top 3 reviews
+                    reviewsToShow.forEach(review => {
+                        html += '<div class="review-item">';
+                        html += '<div class="review-header">';
+                        html += `<span class="review-author">${review.author_name}</span>`;
+                        html += `<span class="review-rating">${getStarRating(review.rating)}</span>`;
+                        html += '</div>';
+                        html += `<div class="review-text">${review.text}</div>`;
+                        if (review.time) {
+                            const reviewDate = new Date(review.time * 1000);
+                            html += `<div style="color: #999; font-size: 0.85em; margin-top: 8px;">${reviewDate.toLocaleDateString()}</div>`;
+                        }
+                        html += '</div>';
+                    });
+                } else {
+                    html += '<div class="info-message">Individual reviews not available, but overall rating is shown above.</div>';
+                }
+            } else {
+                html += '<div class="info-message">No rating or review information available from Google Places.</div>';
+            }
+            html += '</div>';
+
+            // Additional Information
+            html += '<div class="details-section">';
+            html += '<h3>ℹ️ Additional Information</h3>';
+            html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">';
+            if (place.business_status) {
+                const statusText = place.business_status === 'OPERATIONAL' ? 'Operational' : place.business_status;
+                html += `<p style="margin-bottom: 10px;"><strong>Status:</strong> ${statusText}</p>`;
+            }
+            if (place.types && place.types.length > 0) {
+                const relevantTypes = place.types.filter(t => !t.includes('_')).slice(0, 5);
+                if (relevantTypes.length > 0) {
+                    html += `<p style="margin-bottom: 10px;"><strong>Categories:</strong> ${relevantTypes.map(t => t.replace(/_/g, ' ')).join(', ')}</p>`;
+                }
+            }
+            html += `<p><strong>From Our Guide:</strong> ${location.description}</p>`;
+            html += '</div></div>';
+
+            html += '<div style="text-align: center; padding: 20px; color: #999; font-size: 0.85em;">';
+            html += '✓ All information sourced from Google Places API<br>';
+            html += 'Last updated: ' + new Date().toLocaleDateString();
+            html += '</div>';
+
+            modalBody.innerHTML = html;
+        }
+
+        function getStarRating(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '★';
+            }
+            if (hasHalfStar) {
+                stars += '☆';
+            }
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '☆';
+            }
+            
+            return stars;
+        }
+
+        function showBasicInformation(location, mapType, warningMessage = null) {
+            console.log('Showing basic information for:', location.name);
+            
+            // Clear the global timeout
+            if (window.currentDetailsTimeout) {
+                clearTimeout(window.currentDetailsTimeout);
+                window.currentDetailsTimeout = null;
+            }
+            
+            const modalBody = document.getElementById('modalBody');
+            let html = '';
+            
+            if (warningMessage) {
+                html += `
+                    <div class="info-message">
+                        <strong>ℹ️ Note</strong>
+                        <p>${warningMessage}</p>
+                    </div>
+                `;
+            }
+            
+            // Full Address Section
+            html += '<div class="details-section">';
+            html += '<h3>📍 Address</h3>';
+            html += '<div class="address-block">';
+            html += `<p><strong>${location.name}</strong></p>`;
+            html += `<p>${location.address}</p>`;
+            
+            // Add Google Maps link
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.name + ' ' + location.address)}`;
+            html += `<p style="margin-top: 10px;">🗺️ <a href="${mapsUrl}" target="_blank" style="color: #667eea;">Search on Google Maps</a></p>`;
+            html += '</div></div>';
+            
+            // Category and Description
+            html += '<div class="details-section">';
+            html += '<h3>ℹ️ Information</h3>';
+            html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">';
+            html += `<p style="margin-bottom: 10px;"><strong>Category:</strong> ${location.category.charAt(0).toUpperCase() + location.category.slice(1)}</p>`;
+            html += `<p><strong>Description:</strong> ${location.description}</p>`;
+            html += '</div></div>';
+            
+            // Suggested Actions
+            html += '<div class="details-section">';
+            html += '<h3>💡 Suggested Actions</h3>';
+            html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">';
+            html += `<p style="margin-bottom: 10px;">• Search "${location.name}" on Google for opening hours</p>`;
+            html += `<p style="margin-bottom: 10px;">• Check Google Maps for photos and reviews</p>`;
+            html += `<p>• Visit the official website for the most current information</p>`;
+            html += '</div></div>';
+            
+            html += '<div style="text-align: center; padding: 20px; color: #999; font-size: 0.85em;">';
+            html += 'Unable to fetch real-time data from Google Places API.<br>';
+            html += 'Please search for this location on Google Maps for the latest information.';
+            html += '</div>';
+            
+            modalBody.innerHTML = html;
+        }
+
+        function showDetailsError(message) {
+            console.log('Showing error:', message);
+            
+            // Use showBasicInformation with error message
+            if (currentLocationForDetails) {
+                showBasicInformation(currentLocationForDetails, currentTab, message);
+            } else {
+                // Clear the global timeout
+                if (window.currentDetailsTimeout) {
+                    clearTimeout(window.currentDetailsTimeout);
+                    window.currentDetailsTimeout = null;
+                }
+                
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    <div class="error-message">
+                        <strong>⚠️ Unable to Load Details</strong>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Make locations available globally
+        window.locations = locations;
+        window.shenzhenLocations = shenzhenLocations;
+
+        // Fallback if API key is not set - use OpenStreetMap instead
+        if (typeof google === 'undefined' || !google.maps) {
+            console.warn('Google Maps API not loaded. Please add your API key or the map will not display.');
+            document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;"><div style="text-align:center;"><p style="font-size:1.2em;margin-bottom:10px;">⚠️ Google Maps API Key Required</p><p>Please replace YOUR_API_KEY in the script tag with your actual Google Maps API key.</p><p style="margin-top:10px;font-size:0.9em;">Get your API key at: <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Cloud Console</a></p></div></div>';
+        }
+    </script>
+</body>
+</html>
